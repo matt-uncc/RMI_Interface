@@ -1,0 +1,176 @@
+{
+  "FRC_Connect": {
+    "Communication": "FRC_Connect"
+  },
+  "FRC_SystemFault": {
+    "Communication": "FRC_SystemFault",
+    "SequenceID": 1
+  },
+  "FRC_Disconnect": {
+    "Communication": "FRC_Disconnect"
+  },
+  "FRC_Terminate": {
+    "Communication": "FRC_Terminate"
+  },
+  "FRC_SetUFrameUTool": {
+    "Command": "FRC_SetUFrameUTool",
+    "UFrameNumber": 1,
+    "UToolNumber": 1,
+    "Group": 1
+  },
+  "FRC_GetStatus": {
+    "Command": "FRC_GetStatus"
+  },
+  "FRC_Pause": {
+    "Command": "FRC_Pause"
+  },
+  "FRC_Reset": {
+    "Command": "FRC_Reset"
+  },
+  "FRC_Continue": {
+    "Command": "FRC_Continue"
+  },
+  "FRC_Abort": {
+    "Command": "FRC_Abort"
+  },
+  "FRC_WriteDOUT": {
+    "Command": "FRC_WriteDOUT",
+    "PortNumber": 7,
+    "PortValue": "ON"
+  },
+  "FRC_Initialize": {
+    "Command": "FRC_Initialize",
+    "GroupMask": 1,
+    "RTSA": "ON"
+  },
+  "FRC_ReadCartesianPosition": {
+    "Command": "FRC_ReadCartesianPosition",
+    "Group": 1
+  },
+  "FRC_LinearMotion": {
+    "Instruction": "FRC_LinearMotion",
+    "SequenceID": 1,
+    "Configuration": {
+      "UToolNumber": 1,
+      "UFrameNumber": 0,
+      "Front": 1,
+      "Up": 1,
+      "Left": 0,
+      "Flip": 0,
+      "Turn4": 0,
+      "Turn5": 0,
+      "Turn6": 0
+    },
+    "Position": {
+      "X": 150.0,
+      "Y": 275.0,
+      "Z": 380,
+      "W": -180.0,
+      "P": 0.0,
+      "R": 90.0,
+      "Ext1": 0.0,
+      "Ext2": 0.0,
+      "Ext3": 0.0
+    },
+    "SpeedType": "mmSec",
+    "Speed": 250,
+    "TermType": "CNT",
+    "TermValue": 50
+  },
+  "FRC_LinearRelative": {
+    "Instruction": "FRC_LinearRelative",
+    "SequenceID": 1,
+    "Configuration": {
+      "UToolNumber": 1,
+      "UFrameNumber": 1,
+      "Front": 1,
+      "Up": 1,
+      "Left": 0,
+      "Flip": 0,
+      "Turn4": 0,
+      "Turn5": 0,
+      "Turn6": 0
+    },
+    "Position": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "W": 0.0,
+      "P": 0.0,
+      "R": 0.0,
+      "Ext1": 0.0,
+      "Ext2": 0.0,
+      "Ext3": 0.0
+    },
+    "SpeedType": "mmSec",
+    "Speed": 50,
+    "TermType": "CNT",
+    "TermValue": 100
+  },
+  "FRC_JointMotion": {
+    "Instruction": "FRC_JointMotion",
+    "SequenceID": 1,
+    "Configuration": {
+      "UToolNumber": 1,
+      "UFrameNumber": 1,
+      "Front": 1,
+      "Up": 1,
+      "Left": 0,
+      "Flip": 0,
+      "Turn4": 0,
+      "Turn5": 0,
+      "Turn6": 0
+    },
+    "Position": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "W": 0.0,
+      "P": 0.0,
+      "R": 0.0,
+      "Ext1": 0.0,
+      "Ext2": 0.0,
+      "Ext3": 0.0
+    },
+    "SpeedType": "mmSec",
+    "Speed": 50,
+    "TermType": "CNT",
+    "TermValue": 100
+  },
+  "FRC_JointRelative": {
+  "Instruction": "FRC_JointRelative",
+  "SequenceID": 1,
+  "Configuration": {
+    "UToolNumber": 1,
+    "UFrameNumber": 1,
+    "Front": 1,
+    "Up": 1,
+    "Left": 0,
+    "Flip": 0,
+    "Turn4": 0,
+    "Turn5": 0,
+    "Turn6": 0
+  },
+  "Position": {
+    "X": 0.0,
+    "Y": 0.0,
+    "Z": 0.0,
+    "W": 0.0,
+    "P": 0.0,
+    "R": 0.0,
+    "Ext1": 0.0,
+    "Ext2": 0.0,
+    "Ext3": 0.0
+  },
+  "SpeedType": "mmSec",
+  "Speed": 50,
+  "TermType": "CNT",
+  "TermValue": 100
+}
+,
+  "FRC_Call": {
+    "Instruction": "FRC_Call",
+    "SequenceID": 1,
+    "ProgramName": "MyTPProgram"
+  }
+}
