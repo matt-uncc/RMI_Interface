@@ -161,35 +161,34 @@ class FRC_methods():
 
     
     def get_current_position(self):
-        rcvd = self.send_pkg(self.getPackage.ReadCartesianPosition())
-        
-        if rcvd is None:
-            print("Failed to receive data for current position.")
-            return self.curr_x, self.curr_y, self.curr_z, self.curr_w, self.curr_p, self.curr_r
-
-        try:
-            if isinstance(rcvd, bytes):
-                rcvd = rcvd.decode('ascii')
-            pkg = self.handler.json_to_dict(rcvd)
-            print(f"Received position package: {pkg}")
+        while True:
+            rcvd = self.send_pkg(self.getPackage.ReadCartesianPosition())           
+            try:
+                if isinstance(rcvd, bytes):
+                    rcvd = rcvd.decode('ascii')
+                pkg = self.handler.json_to_dict(rcvd)
+                print(f"Received position package: {pkg}")
+                
+                if pkg.get('ErrorID', -1) == 0:
+                    config = pkg.get('Configuration', {})
+                    utool_frame = config.get('UFrameNumber', None)
+                    if utool_frame is not None:
+                        self.UtoolNumber = config.get('UToolNumber')
+                        self.UFrameNumber = config.get('UFrameNumber')
+                        pos = pkg.get('Position', {})
+                        self.curr_x = pos.get('X', 0.0)
+                        self.curr_y = pos.get('Y', 0.0)
+                        self.curr_z = pos.get('Z', 0.0)
+                        self.curr_w = pos.get('W', 0.0)
+                        self.curr_p = pos.get('P', 0.0)
+                        self.curr_r = pos.get('R', 0.0)
+                        print("here")
+                        break
+                else:
+                    print(f"ErrorID not 0, response: {pkg}")
+            except Exception as e:
+                print(f"Failed to parse position response: {e}")
             
-            if pkg.get('ErrorID', -1) == 0:
-                config = pkg.get('Configuration', {})
-                self.UtoolNumber = config.get('UToolNumber', 1)
-                self.UFrameNumber = config.get('UFrameNumber', 1)
-                pos = pkg.get('Position', {})
-                self.curr_x = pos.get('X', 0.0)
-                self.curr_y = pos.get('Y', 0.0)
-                self.curr_z = pos.get('Z', 0.0)
-                self.curr_w = pos.get('W', 0.0)
-                self.curr_p = pos.get('P', 0.0)
-                self.curr_r = pos.get('R', 0.0)
-                # print(f"Current Position: X={self.curr_x}, Y={self.curr_y}, Z={self.curr_z}, W={self.curr_w}, P={self.curr_p}, R={self.curr_r}")    
-            else:
-                print(f"ErrorID not 0, response: {pkg}")
-        except Exception as e:
-            print(f"Failed to parse position response: {e}")
-        
         return self.curr_x, self.curr_y, self.curr_z, self.curr_w, self.curr_p, self.curr_r
 
 
@@ -234,10 +233,19 @@ class FRC_methods():
         return errorID
     
     def FRC_get_status(self):
-        rcvd = self.send_pkg(self.getPackage.GetStatus())
-        pkg = self.handler.json_to_dict(rcvd)
-        errorID = pkg.get('ErrorID', None)
-        self.sequence = pkg.get('NextSequenceID', None)
+        while True:
+            rcvd = self.send_pkg(self.getPackage.GetStatus())
+            pkg = self.handler.json_to_dict(rcvd)
+            errorID = pkg.get('ErrorID', None)
+            sequence = pkg.get('NextSequenceID')
+            if sequence is not None:
+                self.sequence = sequence
+                print(f"Next Sequence ID: {self.sequence}")
+                break
+            else:
+                print("No sequence ID received, retrying...")
+                time.sleep(0.1)  # Wait before retrying
+
         if errorID != 0:
             print(f"GetStatus failed with ErrorID: {errorID}")
         else:

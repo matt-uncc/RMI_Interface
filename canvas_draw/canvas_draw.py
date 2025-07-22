@@ -35,52 +35,49 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
             canvas.create_line(last_x, last_y, x, y, fill='black', width=2)
             path_points.append((x, y))
 
-    # def show_points():
-    #     print("Path points:")
-    #     for point in path_points:
-    #         print(point)
 
     def clear_canvas():
         canvas.delete("all")
         path_points.clear()
 
-    def move_robot_to_path():
+    def move_robot_to_path(path):
+        method.FRC_get_status()
         method.FRC_call("_GET_Z_HEIGHT")
         method.FRC_reset()
+        sleep(1)
         method.get_current_position()
         method.FRC_call("_DW_MOVEUP")
 
         def move():
             nonlocal requester
-            if not path_points:
+            if not path:
                 print("No points to move to.")
                 return
 
-            point_numb = 0
-            total_points = len(path_points)
+            total_points = len(path)
 
-            for i, point in enumerate(path_points):
+            for i, point in enumerate(path):
                 # Wait until there’s room in the buffer
                 # while method.sequenceDiff >= 8:
                 #     sleep(0.01)
 
                 # Convert point to workspace coordinates
-                if requester == 1:
-                    ws_x, ws_y = point[0], point[1]
+                
+                if i >= total_points-1:
+                    method.FRC_call("_DW_MOVEUP")
                 else:
-                    ws_x, ws_y = convert_screen_to_ws(point[0], point[1], screen_width, screen_height)
-                method.linear_move(ws_x, ws_y)
-                point_numb += 1
-            if point_numb == total_points:    
-                method.linear_move(ws_x, ws_y, method.curr_z +100)
-                requester = 0
+                    if requester == 1:
+                        ws_x, ws_y = point[0], point[1]
+                        method.linear_move(ws_x, ws_y)
+                    else:
+                        ws_x, ws_y = convert_screen_to_ws(point[0], point[1], screen_width, screen_height)
+                        method.linear_move(ws_x, ws_y)
+            
         
             # wait_for_sequence_ack(method)
         move_thread = threading.Thread(target=move, daemon=True)
         move_thread.start()
         
-
-
     
     
     def hspo_loop(sock):
@@ -88,7 +85,7 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         while True:
             binary_format = ">LLLHH6fLL"
             required_length = struct.calcsize(binary_format)
-            data, _ = HSPO.recvfrom(1024)
+            data, _ =  HSPO.recvfrom(1024)
             result = hspo_extract(data, required_length, binary_format)
             if result and result != last_output:
                 last_output = result
@@ -124,30 +121,23 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         nonlocal requester
         requester = 1
         generate_portrait_points()       
-        path_points.clear()
-        min_x = float('inf')
-        max_x = float('-inf')
-        min_y = float('inf')
-        max_y = float('-inf')
-        
+        path=[]
         with open(r"C:\Users\Matt\Documents\robot_RMIU\RMI_Interface\canvas_draw\oneline_drw\csv\one_line_drawing_cleaned.csv", 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
             for row in reader:
                 x, y = float(row[0]), float(row[1])
-                path_points.append((x, y))
-                
-                if x < min_x:
-                    min_x = x
-                if x > max_x:
-                    max_x = x
-                if y < min_y:
-                    min_y = y
-                if y > max_y:
-                    max_y = y
-        
-        print(f"Portrait points loaded from CSV. path_points length: {len(path_points)}")
-        print(f"Bounds -> min_x: {min_x}, max_x: {max_x}, min_y: {min_y}, max_y: {max_y}")
-        
+                path.append((x, y))
+        method.FRC_reset()
+        method.FRC_get_status()
+        move_robot_to_path(path)
+        print(f"Portrait points loaded from CSV. path_points length: {len(path)}")
+    
+    def draw_path():
+        path = path_points
+        if not path:
+            print("No points to draw.")
+            return
+        move_robot_to_path(path)         
 
     
     # def update_sequence_dif():
@@ -163,9 +153,9 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
     button_frame.pack(pady=10)
 
     # Add buttons
-    Button(button_frame, text="draw Portrait", command=get_portrait_points).pack(side=LEFT, padx=5)
+    Button(button_frame, text="Draw Portrait", command=get_portrait_points).pack(side=LEFT, padx=5)
     Button(button_frame, text="Clear Canvas", command=clear_canvas).pack(side=LEFT, padx=5)
-    Button(button_frame, text="Move Robot", command=move_robot_to_path).pack(side=LEFT, padx=5)
+    Button(button_frame, text="Draw doodle", command=draw_path).pack(side=LEFT, padx=5)
     Button(button_frame, text="Reset", command=method.FRC_reset).pack(side=LEFT, padx=5)
     Button(button_frame, text="Pause", command=method.FRC_pause).pack(side=LEFT, padx=5)
     Button(button_frame, text="Continue", command=method.FRC_continue).pack(side=LEFT, padx=5)

@@ -25,14 +25,9 @@ def udp_client():
 HSPO = udp_client()
 method = FRC_methods(tcp_connect())
 method.FRC_connect()
-errorID = method.FRC_get_status()
-if errorID != 0:
-    method.FRC_reset()
-
-print("Connected and status retrieved successfully.")
 method.FRC_initialize()
 method.FRC_reset()
-method.get_current_position()
+
 
 # Start the canvas app and pass the method object
 run_canvas_gui(method, HSPO)
