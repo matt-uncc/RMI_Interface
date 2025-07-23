@@ -105,7 +105,8 @@ def capture_and_process_image():
         ret, frame = cap.read()
         if not ret:
             continue
-
+        cv2.namedWindow('Webcam Feed', cv2.WND_PROP_FULLSCREEN)
+        cv2.setWindowProperty('Webcam Feed', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)    
         cv2.imshow('Webcam Feed', frame)
         key = cv2.waitKey(1)
 

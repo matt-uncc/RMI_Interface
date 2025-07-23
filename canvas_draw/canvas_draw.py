@@ -41,11 +41,7 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         path_points.clear()
 
     def move_robot_to_path(path):
-        method.FRC_get_status()
-        method.FRC_call("_GET_Z_HEIGHT")
-        method.FRC_reset()
-        sleep(1)
-        method.get_current_position()
+        
         method.FRC_call("_DW_MOVEUP")
 
         def move():
@@ -117,6 +113,13 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         method.FRC_disconnect()
         print("Sequence aborted.")
         
+    def calibrate_Z():
+        method.FRC_get_status()
+        method.FRC_call("_GET_Z_HEIGHT")
+        sleep(0.5)
+        method.get_current_position()
+        method.FRC_call("_DW_MOVEUP")
+        
     def get_portrait_points():
         nonlocal requester
         requester = 1
@@ -132,13 +135,21 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         move_robot_to_path(path)
         print(f"Portrait points loaded from CSV. path_points length: {len(path)}")
     
+   
+        
+    
+    
     def draw_path():
+        nonlocal requester
         path = path_points
         if not path:
             print("No points to draw.")
             return
-        move_robot_to_path(path)         
-
+        requester = 0
+        move_robot_to_path(path)  
+        
+               
+    
     
     # def update_sequence_dif():
     #     method.listen()
@@ -157,13 +168,13 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
     Button(button_frame, text="Clear Canvas", command=clear_canvas).pack(side=LEFT, padx=5)
     Button(button_frame, text="Draw doodle", command=draw_path).pack(side=LEFT, padx=5)
     Button(button_frame, text="Reset", command=method.FRC_reset).pack(side=LEFT, padx=5)
-    Button(button_frame, text="Pause", command=method.FRC_pause).pack(side=LEFT, padx=5)
-    Button(button_frame, text="Continue", command=method.FRC_continue).pack(side=LEFT, padx=5)
-    Button(button_frame, text="Abort", command=method.FRC_abort).pack(side=LEFT, padx=5)
+    # Button(button_frame, text="Pause", command=method.FRC_pause).pack(side=LEFT, padx=5)
+    # Button(button_frame, text="Continue", command=method.FRC_continue).pack(side=LEFT, padx=5)
+    # Button(button_frame, text="Abort", command=method.FRC_abort).pack(side=LEFT, padx=5)
     Button(button_frame, text="Disconnect", command=disconnect_sequence).pack(side=LEFT, padx=5)
     Button(button_frame, text="Connect", command=method.FRC_connect).pack(side=LEFT, padx=6)
     Button(button_frame, text="Get Status", command=method.FRC_get_status).pack(side=LEFT, padx=5)
-    Button(button_frame, text="Get Current Position", command=method.get_current_position).pack(side=LEFT, padx=5)
+    Button(button_frame, text="Initialize Z", command=calibrate_Z).pack(side=LEFT, padx=5)
     
     
     entry_frame = Frame(root)

@@ -1,7 +1,6 @@
 import socket
 from HSPO_extract import hspo_extract
 from move_robot import FRC_methods
-import struct
 from canvas_draw import run_canvas_gui  # Import the function you just created
 
 # initialize sockets
