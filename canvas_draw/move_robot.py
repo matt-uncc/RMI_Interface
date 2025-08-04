@@ -17,7 +17,7 @@ class FRC_methods():
         self.sequence = sequence
         self.curr_x, self.curr_y, self.curr_z, self.curr_w, self.curr_p, self.curr_r = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         self.UtoolNumber = 1
-        self.UFrameNumber = 1
+        self.UFrameNumber = 5
         self.sequenceDiff = 0
 
     # Define the linear move method

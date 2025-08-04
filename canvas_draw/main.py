@@ -2,6 +2,7 @@ import socket
 from HSPO_extract import hspo_extract
 from move_robot import FRC_methods
 from canvas_draw import run_canvas_gui  # Import the function you just created
+import time
 
 # initialize sockets
 def tcp_connect():
@@ -23,9 +24,17 @@ def udp_client():
 # Create an instance of the class
 HSPO = udp_client()
 method = FRC_methods(tcp_connect())
+
 method.FRC_connect()
+# method.FRC_abort()
 method.FRC_initialize()
 method.FRC_reset()
+time.sleep(3)
+method.FRC_get_status()
+method.FRC_call("_GET_Z_HEIGHT")
+time.sleep(2)  # Wait for the robot to initialize
+method.FRC_reset()
+method.get_current_position()
 
 
 # Start the canvas app and pass the method object

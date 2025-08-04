@@ -18,14 +18,22 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
     canvas.pack(fill='both', expand=True, pady=10)
     screen_width = canvas.winfo_screenwidth()
     screen_height = canvas.winfo_screenheight()
+    all_paths = []
     path_points = []
+    current_path_points = []
     requester = 0
     
     
     
     def start_drawing(event):
-        path_points.clear()
         path_points.append((event.x, event.y))
+        current_path_points.append((event.x, event.y))
+        all_paths.append(current_path_points.copy())
+        canvas.path_points = path_points
+        current_path_points.clear()
+   
+        
+        
 
     def draw(event):
         x, y = event.x, event.y
@@ -34,11 +42,15 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         if distance >= 20:
             canvas.create_line(last_x, last_y, x, y, fill='black', width=2)
             path_points.append((x, y))
+            current_path_points.append((x, y))
+            # canvas.path_points.append((x, y))
 
 
     def clear_canvas():
         canvas.delete("all")
         path_points.clear()
+        all_paths.clear()
+        current_path_points.clear()
 
     def move_robot_to_path(path):
         
@@ -50,25 +62,29 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
                 print("No points to move to.")
                 return
 
-            total_points = len(path)
-
-            for i, point in enumerate(path):
-                # Wait until there’s room in the buffer
-                # while method.sequenceDiff >= 8:
-                #     sleep(0.01)
-
-                # Convert point to workspace coordinates
-                
-                if i >= total_points-1:
-                    method.FRC_call("_DW_MOVEUP")
-                else:
-                    if requester == 1:
-                        ws_x, ws_y = point[0], point[1]
-                        method.linear_move(ws_x, ws_y)
-                    else:
-                        ws_x, ws_y = convert_screen_to_ws(point[0], point[1], screen_width, screen_height)
-                        method.linear_move(ws_x, ws_y)
             
+            for curr_path in path:
+                
+                # if not path:
+                #     return
+                total_points = len(curr_path)
+                for i, point in enumerate(curr_path):
+                    # Wait until there’s room in the buffer
+                    # while method.sequenceDiff >= 8:
+                    #     sleep(0.01)
+
+                    # Convert point to workspace coordinates
+                    
+                    if i >= total_points-1:
+                        method.FRC_call("_DW_MOVEUP")
+                    else:
+                        if requester == 1:
+                            ws_x, ws_y = point[0], point[1]
+                            method.linear_move(ws_x, ws_y)
+                        else:
+                            ws_x, ws_y = convert_screen_to_ws(point[0], point[1], screen_width, screen_height)
+                            method.linear_move(ws_x, ws_y)
+                
         
             # wait_for_sequence_ack(method)
         move_thread = threading.Thread(target=move, daemon=True)
@@ -141,7 +157,8 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
     
     def draw_path():
         nonlocal requester
-        path = path_points
+        all_paths.append(current_path_points.copy())
+        path = all_paths
         if not path:
             print("No points to draw.")
             return
