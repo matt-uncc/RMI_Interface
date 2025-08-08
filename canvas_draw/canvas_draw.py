@@ -26,14 +26,10 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
     
     
     def start_drawing(event):
-        path_points.append((event.x, event.y))
-        current_path_points.append((event.x, event.y))
-        all_paths.append(current_path_points.copy())
-        canvas.path_points = path_points
-        current_path_points.clear()
-   
-        
-        
+        # Start a new path for each mouse press
+        nonlocal path_points
+        path_points = [(event.x, event.y)]
+        all_paths.append(path_points)
 
     def draw(event):
         x, y = event.x, event.y
@@ -42,32 +38,31 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         if distance >= 20:
             canvas.create_line(last_x, last_y, x, y, fill='black', width=2)
             path_points.append((x, y))
-            current_path_points.append((x, y))
-            # canvas.path_points.append((x, y))
-
 
     def clear_canvas():
         canvas.delete("all")
-        path_points.clear()
         all_paths.clear()
-        current_path_points.clear()
+        path_points.clear()
 
     def move_robot_to_path(path):
         
         method.FRC_call("_DW_MOVEUP")
+        sleep(0.5)
+        method.FRC_get_status()
 
         def move():
             nonlocal requester
             if not path:
                 print("No points to move to.")
                 return
-
+            max_distance = 0
             
             for curr_path in path:
                 
                 # if not path:
                 #     return
                 total_points = len(curr_path)
+                previous_point = curr_path[0]
                 for i, point in enumerate(curr_path):
                     # Wait until there’s room in the buffer
                     # while method.sequenceDiff >= 8:
@@ -76,11 +71,23 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
                     # Convert point to workspace coordinates
                     
                     if i >= total_points-1:
-                        method.FRC_call("_DW_MOVEUP")
+                        method.FRC_get_status()
+                        sleep(0.5)
+                        method.FRC_call("_DW_HOME")
                     else:
                         if requester == 1:
+                            distance = ((point[0] - previous_point[0]) ** 2 + (point[1] - previous_point[1]) ** 2) ** 0.5
+                            if distance > max_distance:
+                                max_distance = distance
+                            print(f"Moving to point: {point}, Previous point: {previous_point}")
+                            print(f"max_distance: {max_distance}")
+                            print(f"distance: {distance}")
+                            if distance >= 30:
+                                method.FRC_call("_DW_MOVEUP")
+                                
                             ws_x, ws_y = point[0], point[1]
                             method.linear_move(ws_x, ws_y)
+                            previous_point = point
                         else:
                             ws_x, ws_y = convert_screen_to_ws(point[0], point[1], screen_width, screen_height)
                             method.linear_move(ws_x, ws_y)
@@ -97,7 +104,7 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         while True:
             binary_format = ">LLLHH6fLL"
             required_length = struct.calcsize(binary_format)
-            data, _ =  HSPO.recvfrom(1024)
+            data, _ =    HSPO.recvfrom(1024)
             result = hspo_extract(data, required_length, binary_format)
             if result and result != last_output:
                 last_output = result
@@ -148,7 +155,7 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
                 path.append((x, y))
         method.FRC_reset()
         method.FRC_get_status()
-        move_robot_to_path(path)
+        move_robot_to_path([path])
         print(f"Portrait points loaded from CSV. path_points length: {len(path)}")
     
    
@@ -157,13 +164,11 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
     
     def draw_path():
         nonlocal requester
-        all_paths.append(current_path_points.copy())
-        path = all_paths
-        if not path:
+        if not all_paths:
             print("No points to draw.")
             return
         requester = 0
-        move_robot_to_path(path)  
+        move_robot_to_path(all_paths)  
         
                
     

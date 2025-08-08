@@ -131,8 +131,6 @@ while True:
             longest_path = find_longest_path(graph)
             points = np.array([[y, x] for x, y in longest_path])  # convert to (x, y)
             norm_path = normalize_and_center_points(points)
-            down_sampled_points = down_sample_points(norm_path)
-            print(f"[INFO] Extracted {len(down_sampled_points)}")
             plot_path(norm_path, title="One-Line Drawing Path")
             return norm_path
         
