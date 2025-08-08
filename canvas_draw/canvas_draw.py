@@ -104,7 +104,7 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         while True:
             binary_format = ">LLLHH6fLL"
             required_length = struct.calcsize(binary_format)
-            data, _ =    HSPO.recvfrom(1024)
+            data, _ =       HSPO.recvfrom(1024)
             result = hspo_extract(data, required_length, binary_format)
             if result and result != last_output:
                 last_output = result
@@ -143,20 +143,30 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         method.get_current_position()
         method.FRC_call("_DW_MOVEUP")
         
+   
+        
     def get_portrait_points():
         nonlocal requester
         requester = 1
-        generate_portrait_points()       
-        path=[]
+        generate_portrait_points()
+        all_csv_paths = []
+        current_path = []
         with open(r"C:\Users\Matt\Documents\robot_RMIU\RMI_Interface\canvas_draw\oneline_drw\csv\one_line_drawing_cleaned.csv", 'r', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                x, y = float(row[0]), float(row[1])
-                path.append((x, y))
+            for line in f:
+                line = line.strip()
+                if not line:
+                    if current_path:
+                        all_csv_paths.append(current_path)
+                        current_path = []
+                else:
+                    x, y = map(float, line.split(','))
+                    current_path.append((x, y))
+            if current_path:  # Add last path if file doesn't end with blank line
+                all_csv_paths.append(current_path)
         method.FRC_reset()
         method.FRC_get_status()
-        move_robot_to_path([path])
-        print(f"Portrait points loaded from CSV. path_points length: {len(path)}")
+        move_robot_to_path(all_csv_paths)
+        print(f"Portrait points loaded from CSV. Number of paths: {len(all_csv_paths)}")
     
    
         

@@ -131,7 +131,9 @@ def capture_and_process_image():
             csv_path = r"C:\Users\Matt\Documents\robot_RMIU\RMI_Interface\canvas_draw\oneline_drw\csv\one_line_drawing_cleaned.csv"
             if os.path.exists(csv_path):
                 os.remove(csv_path)
-            np.savetxt(csv_path, final_path, delimiter=",", fmt="%.2f")
+            with open(csv_path, "w") as f:
+                np.savetxt(f, final_path, delimiter=",", fmt="%.2f")
+                f.write("\n")  # Blank line to separate paths
             print(f"[INFO] Saved path to {csv_path}")
             break
 

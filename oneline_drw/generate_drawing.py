@@ -127,6 +127,10 @@ while True:
             gray = load_image(segmented_image)
             edges = detect_edges(gray)
             skeleton = skeletonize_image(edges)
+            # Display the skeleton image
+            cv2.imshow("Skeleton", skeleton)
+            cv2.waitKey(0)
+            cv2.destroyWindow("Skeleton")
             graph = build_graph(skeleton)
             longest_path = find_longest_path(graph)
             points = np.array([[y, x] for x, y in longest_path])  # convert to (x, y)
@@ -140,6 +144,18 @@ while True:
         os.makedirs(output_dir, exist_ok=True)
         img_path = os.path.join(output_dir, "foreground_segmented.png")
         cv2.imwrite(img_path, segmented_image)
+
+        # Face Mesh processing
+        mp_face_mesh = mp.solutions.face_mesh
+        face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1)
+        results_face = face_mesh.process(image_rgb)
+
+        if results_face.multi_face_landmarks:
+            for face_landmarks in results_face.multi_face_landmarks:
+                h, w, _ = segmented_image.shape
+                for lm in face_landmarks.landmark:
+                    x, y = int(lm.x * w), int(lm.y * h)
+                    cv2.circle(segmented_image, (x, y), 1, (0, 0, 255), -1)  # Red dots for face features
 
         final_path = process(segmented_image)
 
