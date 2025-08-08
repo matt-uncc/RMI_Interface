@@ -82,6 +82,31 @@ class FRC_():
         pkg['Position']['R'] = r
         return pkg
     
+    def JointMotion(self, sequence, UFrameNum, UToolNum, x, y, z, w, p, r):
+        pkg = self.dict['FRC_JointMotion']
+        pkg['SequenceID'] = sequence
+        pkg['Configuration']["UFrameNumber"] = UFrameNum    
+        pkg['Configuration']['UToolNumber'] = UToolNum
+        pkg['Position']['X'] = x
+        pkg['Position']['Y'] = y
+        pkg['Position']['Z'] = z
+        pkg['Position']['W'] = w
+        pkg['Position']['P'] = p
+        pkg['Position']['R'] = r
+        return pkg
+    def JointMotionRelative(self, sequence, UFrameNum, UToolNum, j1, j2, j3, j4, j5, j6):
+        pkg = self.dict['FRC_JointRelative']
+        pkg['SequenceID'] = sequence
+        pkg['Configuration']["UFrameNumber"] = UFrameNum    
+        pkg['Configuration']['UToolNumber'] = UToolNum
+        pkg['Position']['J1'] = j1
+        pkg['Position']['J2'] = j2
+        pkg['Position']['J3'] = j3
+        pkg['Position']['J4'] = j4
+        pkg['Position']['J5'] = j5
+        pkg['Position']['J6'] = j6
+        return pkg
+
     def Call(self, method_name, sequence_id=1):
         pkg = self.dict['FRC_Call']
         pkg['ProgramName'] = method_name

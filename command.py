@@ -12,6 +12,11 @@ class Command:
         pkg = self.getPackage.Reset()
         pkg = self.handler.dict_to_json(pkg)
         return pkg
+    
+    def button_connect(self):
+        pkg = self.getPackage.Connect()
+        pkg = self.handler.dict_to_json(pkg)
+        return pkg
 
     def button_pause(self):
         pkg = self.getPackage.Pause()
@@ -45,4 +50,7 @@ class Command:
         pkg = self.handler.dict_to_json(pkg)
         return  pkg
 
-   
+    def button_initialize(self):
+        pkg = self.getPackage.Initialize()
+        pkg = self.handler.dict_to_json(pkg)
+        return pkg

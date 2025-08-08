@@ -10,7 +10,7 @@ from pkg_2_call import MotionMethod
 handler = handlerDict()
 getPackage = FRC_()
 
-move= ["LinearMotion", "JointMotion", "LinearRelativeMotion", "JointRelativeMotion"] 
+move= ["LinearMotion", "JointMotion","JointRelativeMotion"] 
 
 
 # create GUI window
@@ -20,15 +20,15 @@ c_window.title('Test Client')
 
 
 # initialize socket
-# global s
-# ip_connect = "192.168.1.100"
-# port_connect = 16002
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.settimeout(5)  # Set a timeout for the socket operations
-# try:
-#     s.connect((ip_connect, port_connect))
-# except socket.timeout:
-#     print(f"Error connecting to socket at {ip_connect}:{port_connect}")
+global s
+ip_connect = "192.168.1.100"
+port_connect = 16002
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.settimeout(5)  # Set a timeout for the socket operations
+try:
+    s.connect((ip_connect, port_connect))
+except socket.timeout:
+    print(f"Error connecting to socket at {ip_connect}:{port_connect}")
 
 
 # create a dictionary from text file
@@ -39,17 +39,10 @@ with open('from_manual.txt', 'r') as file:
 
 
 def button_connect():
-    global s
-    ip_connect = ip_text.get()
-    port_connect = int(port_text.get())
-
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((ip_connect, port_connect))
-        receive_entry.insert("1.0", "connection established")
-    except Exception as e:
-        receive_entry.insert("1.0", f"fail to connect: {e}")
-
+    pkg = Command().button_connect()
+    rcvd = send_pkg(pkg)
+    receive_entry.insert("1.0", rcvd)
+    button_initialize()
     return
 
 def button_reset():
@@ -91,29 +84,31 @@ def button_get_status():
 #     return 
 
 # this method take json pkg and send it to the robot
-def send_pkg(pkg):       
+def send_pkg(pkg, bit = False): 
+    global s      
     try:
+        print(f"Sending: {pkg}")
         s.send(pkg.encode('ascii')) 
+        # time.sleep(0.5)  # wait for the server to process the request
         s.settimeout(5)
         start_time = time.time()
-
-        while time.time() - start_time < 10:
-            try:
-                rcvd = s.recv(1024)
-                receive_entry.delete("1.0", END)
-                receive_entry.insert("1.0", rcvd)
-                return rcvd
-                # sequence = sequence + 1
-            except socket.timeout:
-                print("time out waiting for return messages")
-
+        if bit == False:
+            while time.time() - start_time < .5:
+                try:
+                    rcvd = s.recv(1024)
+                    receive_entry.delete("1.0", END)
+                    receive_entry.insert("1.0", rcvd)
+                    print(f"Received: {rcvd}")
+                    return rcvd
+                    # sequence = sequence + 1
+                except socket.timeout:
+                    print("time out waiting for return messages")
+        
     except Exception as e:
         receive_entry.delete("1.0", END)
-        receive_entry.insert("1.0", f"Send failed: {e}")
-        return None
-    return None
-    return None
-    return None
+        receive_entry.insert("1.0", f"Send failed: {e}" )
+    return 
+
 
 
 def submit_button(): 
@@ -128,31 +123,40 @@ def get_sequenceID(pkg):
             sequence = dict['NextSequenceID']
     return sequence
 
-
+def button_initialize():
+    pkg = Command().button_initialize()
+    rcvd = send_pkg(pkg)
+    receive_entry.insert("1.0", rcvd)
+    return
 
 
 def moveTo(mode):
     sequence = button_get_status()
-    
+    time.sleep(0.5)
     if s:
-        val1 = x_text.get()
-        val2 = y_text.get()
-        val3 = z_text.get()
-        val4 = w_text.get()
-        val5 = p_text.get()
-        val6 = r_text.get()
-        if mode == "LinearMotion":
-            motion_package = MotionMethod.linear_move(sequence, val1, val2, val3, val4, val5, val6)
-            send_pkg(motion_package)
+        uFrameNumber = int(uFrame_text.get())
+        uToolNumber = int(uTool_text.get())
+        val1 = float(x_text.get())
+        val2 = float(y_text.get())
+        val3 = float(z_text.get())
+        val4 = float(w_text.get())
+        val5 = float(p_text.get())
+        val6 = float(r_text.get())
 
-        elif mode == "LinearRelativeMotion":
-            motion_package = MotionMethod.linear_relative_move(sequence, val1, val2, val3, val4, val5, val6)
-            send_pkg(motion_package)
+
+        # Create an instance of MotionMethod
+        motion_method = MotionMethod(sequence)
+        
+        if mode == "LinearMotion":
+            motion_package = handler.dict_to_json(motion_method.linear_move(val1, val2, val3, val4, val5, val6, uFrameNumber, uToolNumber))
+            send_pkg(motion_package ,bit = True)
         elif mode == "JointMotion":
-            motion_package = MotionMethod.joint_motion(sequence, val1, val2, val3, val4, val5, val6)
+            # Remove 'sequence' parameter since it's already set in constructor
+            motion_package = handler.dict_to_json(motion_method.joint_motion(val1, val2, val3, val4, val5, val6, uFrameNumber, uToolNumber))
             send_pkg(motion_package)
         elif mode == "JointRelativeMotion":
-            motion_package = MotionMethod.joint_relative_motion(sequence, val1, val2, val3, val4, val5, val6)
+            # Remove 'sequence' parameter since it's already set in constructor
+            motion_package = handler.dict_to_json(motion_method.joint_motion_relative(val1, val2, val3, val4, val5, val6, uFrameNumber, uToolNumber))
             send_pkg(motion_package)
     else:
         receive_entry.insert("1.0", "connection is not established")
@@ -161,144 +165,128 @@ def moveTo(mode):
 
 opt = StringVar(value="LinearMotion")  # Default value)
 
-OptionMenu(c_window, opt, *move).grid(row=2, column=4)
-Button(c_window, text="Move", command=moveTo).grid(row=1, column=11)
+# --- Frames for organization ---
+connection_frame = Frame(c_window)
+connection_frame.grid(row=0, column=0, columnspan=2, pady=5, sticky="w")
 
+motion_frame = Frame(c_window)
+motion_frame.grid(row=0, column=2, columnspan=6, pady=5, sticky="w")
 
+status_frame = Frame(c_window)
+status_frame.grid(row=1, column=0, columnspan=2, pady=5, sticky="w")
 
+emergency_frame = Frame(c_window)
+emergency_frame.grid(row=1, column=2, columnspan=6, pady=5, sticky="w")
 
-# button and place holder creation
-port_label = Label(text = 'Port')
-port_label.grid(row = 0, column = 0)
+position_frame = Frame(c_window)
+position_frame.grid(row=2, column=0, columnspan=13, pady=5, sticky="w")
 
-port_text = Entry()
-port_text.insert(0, '16002')
-port_text.grid(row = 0, column = 1)
+output_frame = Frame(c_window)
+output_frame.grid(row=3, column=0, columnspan=13, pady=10, sticky="w")
 
-ip_label = Label(text = 'IP Address')
+# --- Connection Buttons ---
+connect_btn = Button(connection_frame, text='Connect', command=button_connect)
+connect_btn.pack(side=LEFT, padx=2)
+disconnect_btn = Button(connection_frame, text='Disconnect', command=button_disconnect)
+disconnect_btn.pack(side=LEFT, padx=2)
 
-ip_label.grid(row = 1, column = 0)
+# --- Motion Controls ---
+Label(motion_frame, text="Motion Type:").pack(side=LEFT, padx=2)
+OptionMenu(motion_frame, opt, *move).pack(side=LEFT, padx=2)
+Button(motion_frame, text="Move", command=lambda: moveTo(opt.get())).pack(side=LEFT, padx=2)
 
-ip_text = Entry()
-ip_text.insert(0,"192.168.1.100")
-ip_text.grid(row = 1, column = 1)
+# --- Status Button ---
+getST_btn = Button(status_frame, text='GetStatus', command=button_get_status)
+getST_btn.pack(side=LEFT, padx=2)
 
-connect_btn = Button(c_window, text = 'Connect', command = button_connect)
-connect_btn.grid(row = 2, column = 0)
+# --- Emergency Buttons ---
+reset_btn = Button(emergency_frame, text='Reset', command=button_reset)
+reset_btn.pack(side=LEFT, padx=2)
+pause_btn = Button(emergency_frame, text='Pause', command=button_pause)
+pause_btn.pack(side=LEFT, padx=2)
+continue_btn = Button(emergency_frame, text='Continue', command=button_continue)
+continue_btn.pack(side=LEFT, padx=2)
+abort_btn = Button(emergency_frame, text='Abort', command=button_abort)
+abort_btn.pack(side=LEFT, padx=2)
 
+# --- Position Inputs ---
+Label(position_frame, text="UFrame Number").grid(row=0, column=0)
+uFrame_text = Entry(position_frame)
+uFrame_text.insert(0, '1')
+uFrame_text.grid(row=1, column=0)
 
-receive_label = Label(text = 'Robot Out')
-receive_label.grid(row = 5, column = 4)
+Label(position_frame, text="UTool Number").grid(row=0, column=1)
+uTool_text = Entry(position_frame)
+uTool_text.insert(0, '1')
+uTool_text.grid(row=1, column=1)
 
-receive_entry = Text(c_window, width=50, height=10, font=("Arial", 16))
-receive_entry.grid(row = 6, column = 1, columnspan=8, padx=10, pady=10)
-
-
-
-
-
-
-# Reset Button 
-reset_btn = Button(c_window, text = 'Reset', command = button_reset)
-reset_btn.grid(row = 1, column = 3)
-# Pause Button 
-pause_btn = Button(c_window, text = 'Pause', command = button_pause)
-pause_btn.grid(row = 0, column = 3)
-#  Button 
-continue_btn = Button(c_window, text = 'Continue', command = button_continue)
-continue_btn.grid(row = 0, column = 4)
-# Reset Button 
-abort_btn = Button(c_window, text = 'Abort', command = button_abort)
-abort_btn.grid(row = 0, column = 5)
-# disconnect
-disconnect_btn = Button(c_window, text = 'Disconnect', command = button_disconnect)
-disconnect_btn.grid(row = 3, column = 0)
-# get status
-getST_btn = Button(c_window, text = 'GetStatus', command = button_get_status)
-getST_btn.grid(row = 3, column = 1)
-
-
-# position input
-# x pos
-x_label = Label(text = "X/J1")
-x_label.grid(row = 0, column = 7)
-
-x_text = Entry()
+Label(position_frame, text="X/J1").grid(row=0, column=2)
+x_text = Entry(position_frame)
 x_text.insert(0, '0.0')
-x_text.grid(row = 1, column = 7)
+x_text.grid(row=1, column=2)
 
-# y pos
-y_label = Label(text = "Y/J2")
-y_label.grid(row = 0, column = 8)
-
-y_text = Entry()
+Label(position_frame, text="Y/J2").grid(row=0, column=3)
+y_text = Entry(position_frame)
 y_text.insert(0,"0.0")
-y_text.grid(row = 1, column = 8)
+y_text.grid(row=1, column=3)
 
-# z pos
-z_label = Label(text = "Z/J3")
-z_label.grid(row = 0, column = 9)
-
-z_text = Entry()
+Label(position_frame, text="Z/J3").grid(row=0, column=4)
+z_text = Entry(position_frame)
 z_text.insert(0,"0.0")
-z_text.grid(row = 1, column = 9)
+z_text.grid(row=1, column=4)
 
-
-# w angle
-w_label = Label(text = "W/J4")
-w_label.grid(row = 2, column = 7)
-
-w_text = Entry()
+Label(position_frame, text="W/J4").grid(row=0, column=5)
+w_text = Entry(position_frame)
 w_text.insert(0,"0.0")
-w_text.grid(row = 3, column = 7)
+w_text.grid(row=1, column=5)
 
-# p angle
-p_label = Label(text = "P/J5")
-p_label.grid(row = 2, column = 8)
-
-p_text = Entry()
+Label(position_frame, text="P/J5").grid(row=0, column=6)
+p_text = Entry(position_frame)
 p_text.insert(0,"0.0")
-p_text.grid(row = 3, column = 8)
+p_text.grid(row=1, column=6)
 
-# r angle
-r_label = Label(text = "R/J6")
-r_label.grid(row = 2, column = 9)
-
-r_text = Entry()
+Label(position_frame, text="R/J6").grid(row=0, column=7)
+r_text = Entry(position_frame)
 r_text.insert(0,"0.0")
-r_text.grid(row = 3, column = 9)
+r_text.grid(row=1, column=7)
 
-# speed
-speed_label = Label(text = "Speed (mmSec)")
-speed_label.grid(row = 2, column = 10)
-
-speed_text = Entry()
+Label(position_frame, text="Speed (mmSec/%)").grid(row=0, column=8)
+speed_text = Entry(position_frame)
 speed_text.insert(0,"50")
-speed_text.grid(row = 3, column = 10)
-# term type
-term_label = Label(text = "Term Type")
-term_label.grid(row = 2, column = 11)
+speed_text.grid(row=1, column=8)
 
-term_text = Entry()
+Label(position_frame, text="Term Type").grid(row=0, column=9)
+term_text = Entry(position_frame)
 term_text.insert(0,"0.0")
-term_text.grid(row = 3, column = 11)
+term_text.grid(row=1, column=9)
 
-# term val
-term_val = Label(text = "Term Val")
-term_val.grid(row = 2, column = 12)
-
-term_val_text = Entry()
+Label(position_frame, text="Term Val").grid(row=0, column=10)
+term_val_text = Entry(position_frame)
 term_val_text.insert(0,"0.0")
-term_val_text.grid(row = 3, column = 12)
+term_val_text.grid(row=1, column=10)
 
-# submit_btn = Button(c_window, text = 'Submit', command = button_submit)
-# submit_btn.grid(row = 1, column = 7)
+# --- Output ---
+receive_label = Label(output_frame, text='Robot Out')
+receive_label.pack(side=TOP, anchor="w")
+receive_entry = Text(output_frame, width=50, height=10, font=("Arial", 16))
+receive_entry.pack(side=TOP, padx=10, pady=10)
 
-
-
-send_pkg(handler.dict_to_json(getPackage.Connect()))
-send_pkg(handler.dict_to_json(getPackage.Reset()))
-send_pkg(handler.dict_to_json(getPackage.Initialize()))
 sequence = send_pkg(handler.dict_to_json(getPackage.GetStatus()))
+
+# --- Manual JSON Command Input ---
+manual_frame = Frame(c_window)
+manual_frame.grid(row=4, column=0, columnspan=13, pady=10, sticky="w")
+
+Label(manual_frame, text="Manual JSON Command:").pack(side=LEFT, padx=2)
+manual_entry = Entry(manual_frame, width=60)
+manual_entry.pack(side=LEFT, padx=2)
+
+def send_manual_json():
+    json_cmd = manual_entry.get() + '\r\n'
+    print(f"Sending manual command: {json_cmd}")
+    send_pkg(json_cmd)
+
+send_manual_btn = Button(manual_frame, text="Send", command=send_manual_json)
+send_manual_btn.pack(side=LEFT, padx=2)
 
 c_window.mainloop()

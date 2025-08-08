@@ -35,7 +35,7 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
         x, y = event.x, event.y
         last_x, last_y = path_points[-1] if path_points else (x, y)
         distance = ((x - last_x) ** 2 + (y - last_y) ** 2) ** 0.5
-        if distance >= 20:
+        if distance >= 10:
             canvas.create_line(last_x, last_y, x, y, fill='black', width=2)
             path_points.append((x, y))
 
@@ -73,7 +73,7 @@ def run_canvas_gui(method, HSPO):  # Accept method from main
                     if i >= total_points-1:
                         method.FRC_get_status()
                         sleep(0.5)
-                        method.FRC_call("_DW_HOME")
+                        method.FRC_call("_DW_MOVEUP")
                     else:
                         if requester == 1:
                             distance = ((point[0] - previous_point[0]) ** 2 + (point[1] - previous_point[1]) ** 2) ** 0.5
