@@ -109,9 +109,11 @@ def send_pkg(pkg):
 
     except Exception as e:
         receive_entry.delete("1.0", END)
-        receive_entry.insert("1.0", f"Send failed: {e}" )
-    return 
-
+        receive_entry.insert("1.0", f"Send failed: {e}")
+        return None
+    return None
+    return None
+    return None
 
 
 def submit_button(): 
